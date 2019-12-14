@@ -1,5 +1,5 @@
 CC = gcc
-LIBS = -lgthread-3.0 `pkg-config gtk+-3.0 --cflags --libs`
+LIBS = -lgthread-2.0 `pkg-config gtk+-2.0 --cflags --libs`
 
 all:	client	server
 

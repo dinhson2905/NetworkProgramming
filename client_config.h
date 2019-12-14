@@ -5,7 +5,7 @@
 #define BUFF_SIZE 512
 
 #define ROOM_SIZE 2
-#define ROOM_NUM 6
+#define ROOM_NUM 4
 #define SCREEN_HEIGHT 400
 #define SCREEN_WIDTH 600
 #define NEW_CLIENT_SUCESS "new_client_success"
@@ -58,3 +58,4 @@ GtkWidget *label_room = NULL, *button_room[ROOM_NUM];
 GtkWidget *label_wait, *btn_back, *msg_box = NULL, *scroll_window, *entry_msg, *friend_box, *label_client[ROOM_SIZE], *box_client;
 GtkWidget *label_start, *label_question, *button_option[4], *text_view_question, *label_ring;
 GtkWidget *end_game_result, *step, *result_box;
+GtkWidget *question, *answer;
