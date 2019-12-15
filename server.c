@@ -60,7 +60,16 @@ int join_room(int connfd, int room_id) {
 	return 1;	
 }
 
-
+void left_room(int connfd, int room_id) {
+	for(int i = 0; i < client_num; i++)
+		if (client_arr[i].connfd == connfd)	{
+			client_arr[i].room_id = -1;
+		}
+	if (room_arr[room_id-1].client_num > 0)
+		room_arr[room_id-1].client_num--;
+	if (room_arr[room_id-1].client_num == 0)
+		room_arr[room_id-1].status = ROOM_PENDING;
+}
 
 void send_msg_room(int connfd, int room_id, char *msg) {
 	for (int i = 0; i < client_num; i++) {
@@ -167,6 +176,36 @@ void *echo(void *arg){
 				}
 			}
 
+			if (strstr(buff, "./left_room")) {
+				puts(buff);
+				room_id =  atoi(get_params(buff));
+				left_room(connfd, room_id);
+				sprintf(msg, "choose_room_again: ");
+				for (int i = 0; i < ROOM_MAX; i++) {
+					sprintf(msg + strlen(msg), "%d-%d#", room_arr[i].id, room_arr[i].client_num);	
+				}
+				send(connfd, msg, strlen(msg), 0);
+				
+				char temp[LENGTH_MSG];
+				if (strstr(buff, "left_room_eliminated"))
+					sprintf(temp, "left_room_eliminated: %s had left room.", get_client(connfd).name);
+				else sprintf(temp, "left_room_running: %s had left room.", get_client(connfd).name); 
+				send_msg_room(connfd, room_id, temp);
+		
+				char temp2[LENGTH_MSG];	
+				sprintf(temp2, "refresh_list_room: ");
+				for (int i = 0; i < ROOM_MAX; i++) {
+					sprintf(temp2 + strlen(temp2), "%d-%d#", room_arr[i].id, room_arr[i].client_num);	
+				}
+				send_all_client(room_id, connfd, temp2);
+			}
+
+			if (strstr(buff, "./new_message")) {
+				sprintf(msg,"new_message_success: %s: ", get_client(connfd).name);
+				sprintf(msg+strlen(msg), "%s", get_params(buff));
+				puts(msg);
+				send_msg_room(connfd, room_id, msg);
+			}
 
 			if (strstr(buff, "./exit")) {
 				

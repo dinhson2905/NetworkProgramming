@@ -19,6 +19,8 @@ typedef struct Client {
     int connfd;
     int room_id;
     char name[100];
+    int turn;
+    int grade;
 } Client;
 
 typedef struct Room {
