@@ -1,11 +1,9 @@
 char * get_data(char command[]) {
 	int i = 0, j;
-	while (command[i] != ' ') {
-		i++;
-	}
+	while (command[i] != ' ') i++;
 	i++;
 
-	char * data = malloc(LENGTH_MSG);
+	char *data = malloc(LENGTH_MSG);
 	for (j = 0; i+j < strlen(command); j++) {
 		data[j] = command[i+j];
 	}
@@ -42,6 +40,7 @@ char * get_friend_name(char str[]) {
 	temp[j] = '\0';
 	return temp;
 }
+
 void convert_client_detail(char *data) {
 	int i = 0, j, k = 0;
 	char element[10];
@@ -58,6 +57,26 @@ void convert_client_detail(char *data) {
 	running_client = k;
 }
 
+void convert_question(char *data) {
+	int i = 0, j = 0;
+	char element[100];
+	int flag = 0;
+	while(data[i]) {
+		memset(element, 0, strlen(element));
+		j = 0;
+		while(data[i] != '#') {
+			element[j++] = data[i++]; 
+		}
+		element[j] = '\0'; 
+		i++;
+		if (!flag) {
+			strcpy(question.question, element);
+			flag = 1;
+		} else strcpy(question.hide_answer, element);   
+	}
+
+}
+
 char * string_multiline(char *str) {
 	char *temp = malloc(LENGTH_MSG*sizeof(char));
 	int  i = 0, j = 0;
@@ -72,3 +91,5 @@ char * string_multiline(char *str) {
 	return g_locale_to_utf8(temp, -1, 0, 0, 0);
 	//return temp;
 }
+
+

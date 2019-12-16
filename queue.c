@@ -4,22 +4,19 @@
 #include <gtk/gtk.h>
 GMutex queueMutex;
 // A linked list (LL) node to store a queue entry 
-struct QNode 
-{ 
+struct QNode { 
     char key[1024]; 
     struct QNode *next; 
 }; 
   
 // The queue, front stores the front node of LL and rear stores ths 
 // last node of LL 
-struct Queue 
-{ 
+struct Queue { 
     struct QNode *front, *rear; 
 }; 
   
 // A utility function to create a new linked list node. 
-struct QNode* newNode(char *k) 
-{ 
+struct QNode* newNode(char *k) { 
     struct QNode *temp = (struct QNode*)malloc(sizeof(struct QNode)); 
     strcpy(temp->key, k);
     temp->next = NULL; 
@@ -27,16 +24,14 @@ struct QNode* newNode(char *k)
 } 
   
 // A utility function to create an empty queue 
-struct Queue *createQueue() 
-{ 
+struct Queue *createQueue() { 
     struct Queue *q = (struct Queue*)malloc(sizeof(struct Queue)); 
     q->front = q->rear = NULL; 
     return q; 
 } 
   
 // The function to add a key k to q 
-void enQueue(struct Queue *q, char *k) 
-{ 
+void enQueue(struct Queue *q, char *k) { 
     g_mutex_lock(&queueMutex);
     // Create a new LL node 
     struct QNode *temp = newNode(k); 
@@ -54,6 +49,7 @@ void enQueue(struct Queue *q, char *k)
     q->rear = temp; 
     g_mutex_unlock(&queueMutex);
 } 
+
 void displayQueue(struct Queue *q) {
     struct QNode *temp = q->front;
     while(temp != NULL) {
@@ -62,8 +58,7 @@ void displayQueue(struct Queue *q) {
     }
 }  
 // Function to remove a key from given queue q 
-struct QNode *deQueue(struct Queue *q) 
-{ 
+struct QNode *deQueue(struct Queue *q) { 
     g_mutex_lock(&queueMutex);
     // If queue is empty, return NULL. 
     if (q->front == NULL) {

@@ -47,6 +47,49 @@ gboolean timer_exe(gpointer p, int test) {
 			data = get_data(msg);
 			choose_room_screen(data);
 	    }
+
+        if (strstr(msg, "join_room_success")) {	
+			data = get_data(msg);
+			wait_friend_screen(data);
+		}
+
+		if (strstr(msg, "join_room_error")) {
+			data = get_data(msg);
+			show_error(data);
+		}
+		/*Hiển thị cho tất cả thằng client cập nhật về  phòng khi có 1 thằng client khác vào phòng thành công*/
+		if (strstr(msg, "refresh_list_room")) {
+			if (label_room != NULL) {
+				puts("change");
+				data = get_data(msg);
+				choose_room_clear();
+				choose_room_screen(data);
+			}
+		}
+		/*Hiển thị cho thằng cùng phòng để update lại phòng khi có đủ thằng vào phòng*/
+		if (strstr(msg, "refresh_friend_room")) {
+			//puts(msg);
+			data = get_data(msg);
+			refresh_friend_room(data);
+		}
+
+		if (strstr(msg, "new_message_success")) {
+			data = get_data(msg);
+			append_message(data);	
+		}
+
+		if (strstr(msg, "new_question_1")) {
+			data = get_data(msg);
+			display_question(data);
+		}
+
+		if (strstr(msg, "new_question_2")) {
+			data = get_data(msg);
+			display_question(data);
+			g_signal_handler_disconnect(entry_msg, handler_id);
+		}
+		
+		/*...refresh_answer_room......*/
     }
 
     return TRUE;
