@@ -15,6 +15,7 @@
 #define FALSE 0 
 #define MODAL_YES -8
 #define MODAL_NO -9
+
 typedef struct Client {
     int connfd;
     int room_id;
@@ -25,6 +26,7 @@ typedef struct Client {
 
 typedef struct Room {
     int id;
+    int turnNow;
     int client_num;
 } Room;
 
@@ -33,6 +35,8 @@ typedef struct Answer {
     int q_option;
 } Answer;
 
+int handler_id;
+int my_turn = FALSE;
 int client_sock = 0, running_client = 0;
 struct Queue *responses;
 Room room_arr[ROOM_NUM];

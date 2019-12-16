@@ -63,6 +63,12 @@ gboolean timer_exe(gpointer p, int test) {
 				choose_room_screen(data);
 			}
 		}
+		if (strstr(msg, "turn_now")){
+			data = get_data(msg);
+			my_turn = atoi(data);
+			printf("my_turn %d\n",my_turn );
+			play_game();
+		}
 		if (strstr(msg, "left_room")) {
 			data = get_data(msg);
 			if (strstr(msg, "left_room_running")) {
@@ -79,7 +85,10 @@ gboolean timer_exe(gpointer p, int test) {
 		}
 		if (strstr(msg, "new_message_success")) {
 			data = get_data(msg);
-			append_message(data);	
+			append_message(data);
+			my_turn = 1;
+			turn_on_text_box();
+			// printf("my_turn lan 2 %d\n", my_turn);	
 		}
     }
 

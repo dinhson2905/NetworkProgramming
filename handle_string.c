@@ -24,6 +24,11 @@ void convert_room_detail(char *data) {
 		}
 		room_arr[k].id = atoi(element);
 		memset(element, 0, strlen(element));
+		while(data[i] != '-') {
+			element[j++] = data[i++]; 
+		}
+		room_arr[k].turnNow = atoi(element);
+		memset(element, 0, strlen(element));
 		j = 0;
 		while(data[i] != '#') {
 			element[j++] = data[i++]; 
@@ -33,6 +38,7 @@ void convert_room_detail(char *data) {
 		i++; // string index
 	}
 }
+
 char * get_friend_name(char str[]) {
 	char *temp= malloc(30*sizeof(char));
 	int  i = 0, j = 0;

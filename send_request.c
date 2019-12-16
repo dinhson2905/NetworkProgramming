@@ -35,6 +35,12 @@ void send_answer(GtkWidget *widget, gpointer *data) {
 	}
 }
 
+void send_full_room(){
+	char message[LENGTH_MSG];
+	sprintf(message, "./send_full_room %d", room_id);
+	send(client_sock,message,strlen(message),0);
+}
+
 void send_back() {
 	char message[LENGTH_MSG];
 	if (running == TRUE)

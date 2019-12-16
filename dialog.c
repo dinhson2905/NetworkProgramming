@@ -9,7 +9,8 @@ void show_error(char error[]) {
                 GTK_BUTTONS_OK,
                 error);
     gtk_window_set_title(GTK_WINDOW(dialog), "Information");
-    gtk_dialog_run(GTK_DIALOG(dialog));
+    // int result = gtk_dialog_run(GTK_DIALOG(dialog));
+    // int result = gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
     gdk_threads_leave();
 }
@@ -25,6 +26,7 @@ void show_info(char info[]) {
                 info);
     gtk_window_set_title(GTK_WINDOW(dialog), "Information");
     gtk_dialog_run(GTK_DIALOG(dialog));
+    // send_full_room();
     gtk_widget_destroy(dialog);
     gdk_threads_leave();
 }

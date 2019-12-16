@@ -17,11 +17,14 @@ typedef struct Client {
     int connfd;
     int room_id;
     char name[100];
+    int turn;
+    int grade;
 } Client;
 
 typedef struct Room {
     int id;
     int client_num;
+    int turnNow;
     int status;
 } Room;
 

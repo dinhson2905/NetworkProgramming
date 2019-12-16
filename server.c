@@ -21,6 +21,7 @@ void room_init() {
 	for (int i = 0; i < ROOM_MAX; i++) {
 		room_arr[i].id	= i + 1;
 		room_arr[i].client_num = 0;
+		room_arr[i].turnNow = 1;
 		room_arr[i].status = ROOM_PENDING;
 	}
 }
@@ -41,6 +42,8 @@ Client get_client(int connfd) {
 
 void new_client(int connfd, char *buff) {
 	client_arr[client_num].connfd = connfd;
+	client_arr[client_num].turn = 1;
+	client_arr[client_num].grade = 0;
 	strcpy(client_arr[client_num++].name, buff);
 }
 
@@ -54,6 +57,7 @@ int join_room(int connfd, int room_id) {
 	for(int i = 0; i < client_num; i++)
 		if (client_arr[i].connfd == connfd)	{
 			client_arr[i].room_id = room_id;
+			client_arr[i].turn = room_arr[room_id-1].client_num;
 		}
 		
 	room_arr[room_id-1].client_num++;
@@ -64,7 +68,15 @@ void left_room(int connfd, int room_id) {
 	for(int i = 0; i < client_num; i++)
 		if (client_arr[i].connfd == connfd)	{
 			client_arr[i].room_id = -1;
+			client_arr[i].turn = 0;
 		}
+		else if (client_arr[i].connfd != connfd && client_arr[i].room_id == room_id){
+			client_arr[i].turn = 1;
+		}
+	if (1 < room_arr[room_id-1].client_num){
+		room_arr[room_id-1].client_num--;
+		room_arr[room_id-1].turnNow = 1;
+	}
 	if (room_arr[room_id-1].client_num > 0)
 		room_arr[room_id-1].client_num--;
 	if (room_arr[room_id-1].client_num == 0)
@@ -101,7 +113,72 @@ char * get_params(char command[]) {
 	return params;
 }
 
+Room get_room_by_id(int id){
+	for (int i = 0; i < ROOM_MAX; i++){
+		if (room_arr[i].id == id-1)
+			return room_arr[i];
+	}
+}
 
+void send_turn_of_client(int connfd, int room_id){
+	Client cl = get_client(connfd);
+	// int room_id_of_client = cl.room_id;
+	Room room_of_client = get_room_by_id(room_id);
+	if (cl.turn == room_of_client.turnNow){
+		char msg[LENGTH_MSG];
+		strcpy(msg,"turn_now ");
+		sprintf(msg+strlen(msg),"%d",1);
+		send(connfd,msg, strlen(msg),0);
+		room_of_client.turnNow = 1 - room_of_client.turnNow;
+	}
+	else {
+		char msg[LENGTH_MSG];
+		strcpy(msg,"turn_now ");
+		sprintf(msg+strlen(msg),"%d",0);
+		send(connfd,msg, strlen(msg),0);
+		room_of_client.turnNow = 1 - room_of_client.turnNow;
+	}
+}
+
+void turn_off_client(int connfd){
+	Client cl = get_client(connfd);
+	int room_id_of_client = cl.room_id;
+	Room room_of_client = get_room_by_id(room_id_of_client);
+	room_of_client.turnNow = 1 - room_of_client.turnNow;
+	char msg[LENGTH_MSG];
+	strcpy(msg,"turn_now ");
+	sprintf(msg+strlen(msg),"%d",0);
+	send(connfd,msg, strlen(msg),0);
+}
+
+int check_answer(Answer * a) {
+	if (q_arr[a->q_num].answer == a->q_option + 1)
+		return 1;
+	return 0;
+}
+
+Answer * get_answer(char *command) {
+	char *answer = get_params(command);
+	char q_num[3];
+	char q_ans[3];
+	
+	Answer *a = malloc(sizeof(Answer));
+	int i = 0, j = 0;
+	while(answer[j] != ' ') {
+		q_num[i++] = answer[j++];
+	}
+	a->q_num = atoi(q_num);
+
+	i = 0; j++;
+	while(j < strlen(answer)) {
+		q_ans[i++] = answer[j++];
+	}
+	q_ans[j-2] = '\0';
+	a->q_option = atoi(q_ans);
+	printf("%d - %d\n", a->q_num, a->q_option);
+	if (a->q_num > 9) a->q_num = a->q_num/10;
+	return a;
+}
 
 void *echo(void *arg){
 	int bytes_sent, bytes_received;
@@ -176,6 +253,18 @@ void *echo(void *arg){
 				}
 			}
 
+			if (strstr(buff, "./send_full_room")){
+				puts(buff);
+				room_id =  atoi(get_params(buff));
+				// Client cl = get_client(connfd);
+				// int room_id_of_client = cl.room_id;
+				// Room room_of_client = get_room_by_id(room_id_of_client);
+				send_turn_of_client(connfd, room_id);
+				for (int j=0; j< client_num;j++){
+					printf("%s %d\n",client_arr[j].name, client_arr[j].turn);
+				}
+			}
+
 			if (strstr(buff, "./left_room")) {
 				puts(buff);
 				room_id =  atoi(get_params(buff));
@@ -205,6 +294,7 @@ void *echo(void *arg){
 				sprintf(msg+strlen(msg), "%s", get_params(buff));
 				puts(msg);
 				send_msg_room(connfd, room_id, msg);
+				// turn_off_client(connfd);
 			}
 
 			if (strstr(buff, "./exit")) {

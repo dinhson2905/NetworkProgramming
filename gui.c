@@ -1,18 +1,19 @@
 /* Tất cả đều nằm trong 1 window, khi mà thay đổi giao diện nghĩa là clear cái cũ đi, vẽ cái mới trên window đó*/
 /*Hàm clear những giao diện cũ, để tạo giao diện mới*/
-void enter_name_clear();
-void choose_room_clear();
-void in_game_clear();
-void end_game_clear();
-
-/*-------Hàm giao diện--------*/
-void game_init(); /*khởi tạo game*/
+void game_init();
+void game_quit(GtkWidget *widget, gpointer *data);
 void enter_name_screen();
-void choose_room_screen();
+void choose_zoom_screen ();
 void wait_friend_screen();
+void append_message(char *msg);
+void enter_name_clear();
+void choose_zoom_clear();
+void in_game_clear();
 void win_game_screen();
 void result_screen();
 void lose_game_screen();
+void enter_name_clear();
+void end_game_clear();
 
 /* ----- Send request function ----*/
 void send_name (GtkWidget *widget, gpointer *data);
@@ -20,6 +21,8 @@ void send_room (GtkWidget *widget, gpointer *data);
 void send_msg();
 void send_answer (GtkWidget *widget, gpointer *data);
 void send_back();
+void send_full_room();
+void turn_off_text_box();
 /* --------------------------------*/
 
 
@@ -63,37 +66,29 @@ void choose_room_clear() {
 	label_room = NULL;
 }
 
-void new_question() {
 
-	if (label_question == NULL) {
-		label_question = gtk_label_new(NULL);
-		gtk_table_attach_defaults(GTK_TABLE(table), label_question, 0, 2, 0, 4);
-		gtk_widget_show(label_question);
-	}
-	char temp[1024];
-	sprintf(temp, "%d : %s", q_cur+1, q_arr[q_cur].question);
-	gtk_label_set_text(GTK_LABEL(label_question), temp);
-	for (int i = 0; i < 4; i++) {
-		if (button_option[i] != NULL) {
-			gtk_button_set_label(GTK_BUTTON(button_option[i]), q_arr[q_cur].option[i]);
-			continue;
-		}
-		button_option[i] = gtk_button_new_with_label(q_arr[q_cur].option[i]);
-		gtk_table_attach_defaults(GTK_TABLE(table), button_option[i], i%2, 1+i%2, 4+i/2, 5+i/2);
-		int * a = malloc(sizeof(int));
-		*a = i;
-		g_signal_connect(G_OBJECT(button_option[i]), "clicked", G_CALLBACK(send_answer), (gpointer) a);
-		gtk_widget_show(button_option[i]);
-	}
-}
 
 void play_game() {
-	running = TRUE;
-	q_cur = 0;
-	load_question(); // load_question_data
-	
-	new_question(); // Show question
+	if (my_turn) {
+		handler_id = g_signal_connect(entry_msg, "activate", G_CALLBACK(turn_off_text_box), NULL);
+	}
+	else g_signal_handler_disconnect(entry_msg,handler_id);
 }
+
+void turn_on_text_box(){
+	handler_id = g_signal_connect(entry_msg,"activate",G_CALLBACK(turn_off_text_box),NULL);
+}
+
+void turn_off_text_box(){
+	send_msg();
+	my_turn = FALSE;
+	g_signal_handler_disconnect(entry_msg,handler_id);
+}
+// void change_to_wait_and_send_msg()
+// {
+// 	send_msg();
+// 	wait_play_game();
+// }
 
 void in_game_clear(){
 	if (btn_back != NULL) {
@@ -189,6 +184,8 @@ void choose_room_screen(char *data) {
 	gtk_widget_show(window);
 }
 
+
+
 void wait_friend_screen(char *data) {
 	// printf("wait_friend_screen\n");
 	choose_room_clear();
@@ -221,11 +218,11 @@ void wait_friend_screen(char *data) {
 	gtk_widget_show(scroll_window);
 
 	entry_msg = gtk_entry_new();
-	g_signal_connect(entry_msg, "activate", G_CALLBACK(send_msg), NULL);
+	// g_signal_connect(entry_msg, "activate", G_CALLBACK(send_msg), NULL);
 	gtk_table_attach_defaults(GTK_TABLE(table), entry_msg, 2, 4, 5, 6);
 	gtk_widget_show(entry_msg);
 	gtk_widget_show(window);
-	printf("wait_friend_screen\n");
+	// printf("wait_friend_screen\n");
 }
 void refresh_friend_room(char *data) {
 	for(int i = 0; i < ROOM_SIZE; i++) {
@@ -250,10 +247,12 @@ void refresh_friend_room(char *data) {
 			else gtk_label_set_text(GTK_LABEL(label_client[i]), client_arr[i].name);
 			gtk_table_attach_defaults(GTK_TABLE(table), label_client[i], 2+i, 3+i, 1, 2);
 			gtk_widget_show(label_client[i]);
+
 		} 
 	}
 	if(running_client == ROOM_SIZE) {
 		show_info("Phòng chơi đã đầy. Bắt đầu ngay!");
+		send_full_room();
 		// play_game(); 
 	}
 }
@@ -273,4 +272,53 @@ void append_message(char *msg) {
 
 	gtk_text_buffer_insert(buffer, &iter, msg, -1);
 	gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW(msg_box), mark);
+
+}
+
+void win_game_screen() {
+	in_game_clear();
+	gtk_widget_show(btn_back);
+	end_game_result = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(end_game_result), "<b>Các bạn đã chiến thắng</b>");
+	gtk_table_attach_defaults(GTK_TABLE(table), end_game_result, 1, 3, 1, 2);
+	gtk_widget_show(end_game_result);
+
+	result_screen();	
+}
+
+void lose_game_screen() {
+	in_game_clear();
+	gtk_widget_show(btn_back);
+	end_game_result = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(end_game_result), "<b>Các bạn đã thua cuộc</b>");
+	gtk_table_attach_defaults(GTK_TABLE(table), end_game_result, 1, 3, 1, 2);
+	gtk_widget_show(end_game_result);
+
+	result_screen();
+}
+
+void result_screen() {
+	result_box = gtk_text_view_new();
+	gtk_table_attach_defaults(GTK_TABLE(table), result_box, 1, 3, 2, 5);
+	GtkTextBuffer *buffer2 = gtk_text_view_get_buffer (GTK_TEXT_VIEW (result_box));
+	
+	char temp[LENGTH_MSG], another_client[40];
+	sprintf(temp, "%s trả lời đúng câu: ", client_name);
+	for(int i = 0; i < q_cur; i++) {
+		if (strcmp(answer_client[i], client_name) == 0)
+			sprintf(temp + strlen(temp), "%d, ", i+1);
+	}
+	int j = 0;
+	for(int i = 0; i < q_cur; i++) {
+		if (strcmp(answer_client[i], client_name) != 0) {
+			if (j == 0) {
+				sprintf(temp + strlen(temp), "--- %s trả lời đúng câu: ", answer_client[i]);
+				j++;
+			}
+			sprintf(temp + strlen(temp), "%d, ", i+1);
+		}
+	}
+
+	gtk_text_buffer_set_text (buffer2, temp, -1);
+	gtk_widget_show(result_box);
 }
