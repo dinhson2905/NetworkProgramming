@@ -23,6 +23,11 @@ void send_character() {
 		return;
 	}
 
+	if (check_char_in_string(send_buffer[0], question.hide_answer)) {
+		show_info("Ký tự này đã được chọn");
+		return;
+	}
+
     append_message(send_buffer);
 	sprintf(message, "./new_character %s", send_buffer);
     send(client_sock, message, strlen(message), 0);

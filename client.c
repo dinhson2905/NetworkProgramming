@@ -22,6 +22,8 @@
 #include "gui.c"
 #include "send_request.c"
 
+
+
 void recv_msg() {
 	char *receive_message = malloc(LENGTH_MSG);
 	memset(receive_message, 0, strlen(receive_message)+1);
@@ -46,6 +48,7 @@ gboolean timer_exe(gpointer p, int test) {
 		if (strstr(msg, "new_client_success") || strstr(msg, "choose_room_again")) {
 			data = get_data(msg);
 			choose_room_screen(data);
+			
 	    }
 
         if (strstr(msg, "join_room_success")) {	
@@ -73,19 +76,31 @@ gboolean timer_exe(gpointer p, int test) {
 			refresh_friend_room(data);
 		}
 
-		if (strstr(msg, "new_message_success")) {
+		if (strstr(msg, "new_character_block")) {
 			data = get_data(msg);
-			append_message(data);	
+
+			g_signal_handler_disconnect(entry_msg, handler_id);
+			redisplay_answer(data);
+		}
+
+		if (strstr(msg, "new_character_unblock")) {
+			data = get_data(msg);
+			
+			handler_id = g_signal_connect(entry_msg, "activate", G_CALLBACK(send_character), NULL);
+			redisplay_answer(data);
 		}
 
 		if (strstr(msg, "new_question_1")) {
 			data = get_data(msg);
 			display_question(data);
+			handler_id = g_signal_connect(entry_msg, "activate", G_CALLBACK(send_character), NULL);
+			//g_signal_handler_disconnect(entry_msg, handler_id);
 		}
 
 		if (strstr(msg, "new_question_2")) {
 			data = get_data(msg);
 			display_question(data);
+			
 			g_signal_handler_disconnect(entry_msg, handler_id);
 		}
 		
@@ -97,6 +112,8 @@ gboolean timer_exe(gpointer p, int test) {
 
 
 int main(int argc, char *argv[]) {
+	
+
     responses = createQueue(); 
 
 	if (!g_thread_supported ()){ g_thread_init(NULL); }
@@ -108,7 +125,7 @@ int main(int argc, char *argv[]) {
 
 	struct sockaddr_in server_socket;
     client_sock = socket(AF_INET, SOCK_STREAM, 0);
-
+	
     server_socket.sin_family = AF_INET;
     server_socket.sin_port = htons(SERVER_PORT);
     server_socket.sin_addr.s_addr = inet_addr(SERVER_ADDR);

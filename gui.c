@@ -4,7 +4,6 @@ void enter_name_clear();
 void choose_room_clear();
 void in_game_clear();
 void end_game_clear();
-
 /*-------Hàm giao diện--------*/
 void game_init(); /*khởi tạo game*/
 void enter_name_screen(); /* Nhập tên */
@@ -16,6 +15,7 @@ void lose_game_screen();
 void play_game(); /* Hàm này được gọi khi đủ người chơi trong phòng, gọi đến hàm new_question */
 void new_question(); /* Hiển thị câu hỏi trên giao diện */
 void append_message(char *data);
+void redisplay_answer(char *data);
 /* ----- Send request function ----*/
 void send_name(GtkWidget *widget, gpointer *data);
 void send_room(GtkWidget *widget, gpointer *data);
@@ -52,6 +52,7 @@ void set_background(const gchar * filename) {
 
 /*----Hàm clear----*/
 void enter_name_clear() {
+
 	if (label_name != NULL) {
 		gtk_widget_hide(label_name);
 		gtk_widget_hide(entry_name);
@@ -164,10 +165,7 @@ void wait_friend_screen(char *data) {
 	choose_room_clear();
 
 	set_background("images/in_game.png");
-	// question = gtk_label_new(NULL);
-	// gtk_label_set_markup(GTK_LABEL(question), "<span><b>Cầu thủ xuất sắc nhất Việt Nam 2019 là ai?</b></span>");
-	// gtk_table_attach_defaults(GTK_TABLE(table), question, 0, 5, 0, 1);
-	// gtk_widget_show(question);
+
 	label_enter_char = gtk_label_new(NULL);
 	gtk_label_set_markup(GTK_LABEL(label_enter_char), "<span><b>Enter Letter: </b></span>");
 	gtk_table_attach_defaults(GTK_TABLE(table), label_enter_char, 0, 1, 6, 7);
@@ -178,7 +176,7 @@ void wait_friend_screen(char *data) {
 
 	btn_back = gtk_button_new_with_label("Back");
 	gtk_table_attach_defaults(GTK_TABLE(table), btn_back, 4, 5, 6, 7);
-	//g_signal_connect(btn_back, "clicked", G_CALLBACK(choose_room_screen), NULL);
+	//g_signal_connect(btn_back, "clicked", G_CALLBACK(hide_label), NULL);
 	gtk_widget_show(btn_back);
 
 	msg_box = gtk_text_view_new();
@@ -195,6 +193,7 @@ void wait_friend_screen(char *data) {
 
 	entry_msg = gtk_entry_new();
 	handler_id = g_signal_connect(entry_msg, "activate", G_CALLBACK(send_character), NULL);
+	g_signal_handler_disconnect(entry_msg, handler_id);
 	gtk_table_attach_defaults(GTK_TABLE(table), entry_msg, 1, 3, 6, 7);
 	gtk_widget_show(entry_msg);
 	gtk_widget_show(window);
@@ -224,6 +223,7 @@ void refresh_friend_room(char *data) {
 			gtk_widget_show(label_client[i]);
 		} 
 	}
+
 	if(running_client == ROOM_SIZE) {
 		show_info(START_GAME);
 		play_game(); 
@@ -234,18 +234,18 @@ void play_game() {
 	running = TRUE;
 	send_question();
 	q_cur = 0;
-	//load_question(); // load_question_data
-	//new_question(); // Show question
 }
 
 void display_question(char *data) {
-	convert_question(data);	
 	
+	convert_question(data);	
+	gtk_widget_hide(label_answer);
+
 	label_question = gtk_label_new(NULL);
 	gtk_label_set_text(GTK_LABEL(label_question), question.question);
 	gtk_table_attach_defaults(GTK_TABLE(table), label_question, 0, 5, 0, 1);
 	gtk_widget_show(label_question);
-	
+
 	label_answer = gtk_label_new(NULL);
 	gtk_label_set_text(GTK_LABEL(label_answer), question.hide_answer);
 	gtk_table_attach_defaults(GTK_TABLE(table), label_answer, 0, 5, 1, 2);
@@ -253,28 +253,6 @@ void display_question(char *data) {
 	
 }
 
-// void new_question() {
-
-// 	char temp[1024];
-// 	label_question = gtk_label_new(NULL);
-// 	sprintf(temp, "Câu hỏi: %s", q_arr[q_cur].question);
-// 	gtk_label_set_text(GTK_LABEL(label_question), temp);
-// 	gtk_table_attach_defaults(GTK_TABLE(table), label_question, 0, 5, 0, 1);
-// 	gtk_widget_show(label_question);
-	
-// 	char temp2[1024];
-// 	for (int i = 0; i < strlen(q_arr[q_cur].answer); i++) {
-// 		if (q_arr[q_cur].answer[i] != ' ') temp2[i] = '*';
-// 		else temp2[i] = ' ';
-// 	}
-
-// 	temp2[strlen(q_arr[q_cur].answer)] = '\0';
-
-// 	label_answer = gtk_label_new(NULL);
-// 	gtk_label_set_text(GTK_LABEL(label_answer), temp2);
-// 	gtk_table_attach_defaults(GTK_TABLE(table), label_answer, 0, 5, 1, 2);
-// 	gtk_widget_show(label_answer);
-// }
 
 void append_message(char *msg) {
 	GtkTextBuffer * buffer;
@@ -293,6 +271,15 @@ void append_message(char *msg) {
 	gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW(msg_box), mark);
 }
 
-void new_Answer() {
+void redisplay_answer(char *data) {
 	
+	gtk_widget_hide(label_answer);
+
+	memset(question.hide_answer, 0, sizeof(question.hide_answer));
+	strcpy(question.hide_answer, data);
+
+	label_answer = gtk_label_new(NULL);
+	gtk_label_set_text(GTK_LABEL(label_answer), question.hide_answer);
+	gtk_table_attach_defaults(GTK_TABLE(table), label_answer, 0, 5, 1, 2);
+	gtk_widget_show(label_answer);
 }

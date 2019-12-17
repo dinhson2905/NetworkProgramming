@@ -6,7 +6,8 @@
 
 #define ROOM_SIZE 2 /*1 room tối đa 2 người*/
 #define ROOM_MAX 4 /*tối đa 4 room*/
- 
+#define MAX_TURN 3 /*tối đa 3 lượt chơi*/
+
 #define NEW_CLIENT_SUCESS "new_client_success"
 #define NEW_CLIENT_ERROR "new_client_error"
 #define ROOM_FULL_NOTIFY "Phòng chơi đã đầy. Hãy chọn phòng khác"
@@ -21,6 +22,7 @@ typedef struct Client {
     int room_id;
     int turn;
     char name[100];
+    int grade;
 } Client;
 
 typedef struct Room {

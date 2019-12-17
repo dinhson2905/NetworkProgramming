@@ -21,7 +21,7 @@ char* get_params(); /* Trả về tham số của message. VD: "./newclient son"
 void send_msg_room(int connfd, int room_id, char *msg); /* Gửi msg cho các thằng client khác cùng phòng */
 void send_all_client(int room_id, int connfd, char *msg); /*  */
 /*-----------------------------------------*/
-
+Question q;
 void room_init() {
 	for (int i = 0; i < ROOM_MAX; i++) {
 		room_arr[i].id	= i + 1;
@@ -42,6 +42,23 @@ Client get_client(int connfd) {
 			return client_arr[i];
 	}
 }
+
+Client get_client_same_room(int connfd) {
+	for (int i = 0; i < client_num; i++) {
+		if ((client_arr[i].room_id == get_client(connfd).room_id) && (client_arr[i].connfd != connfd)) 
+			return client_arr[i];
+	}
+}
+
+int num_char_in_string(char c, char *str) {
+	int count = 0;
+	for (int i = 0; i < strlen(str); i++) {
+		if (str[i] == c) count++;
+	}
+
+	return count;
+}
+
 
 void new_client(int connfd, char *buff) {
 	client_arr[client_num].connfd = connfd;
@@ -185,27 +202,49 @@ void *echo(void *arg){
 			}
 
 			if (strstr(buff, "./new_character")) {
-
-				char new_answer[LENGTH_ANSWER];
-				//char c = temp[0];
-
-				//printf("aaaaa%s\n", q_arr[0].answer);
+				puts(buff);
 				char c = get_char_msg(buff);
+				int count = num_char_in_string(c, q.answer);
 
-				sprintf(msg,"new_message_success: %s", new_answer);
-				// sprintf(msg+strlen(msg), "%s", get_params(buff));
+				for (int i = 0; i < strlen(q.answer); i++) {
+					if (q.answer[i] == c) q.hide_answer[i] = c;
+				}
+				
+				for (int i = 0; i < client_num; i++) {
+					if (client_arr[i].connfd == connfd) {
+						client_arr[i].turn++;
+						client_arr[i].grade += (10*count);
+						break;
+					}
+				}
+
+				Client clnt = get_client(connfd);
+
+				printf("Name: %s ", clnt.name);
+				printf("Turn: %d ", clnt.turn);	
+				printf("Grade: %d\n", clnt.grade);
+				sprintf(msg, "new_character_block: %s", q.hide_answer);
 				puts(msg);
-				send_msg_room(connfd, room_id, msg);
+				send(connfd, msg, strlen(msg), 0);
+				
+				Client client2 = get_client_same_room(connfd);
+
+				if (client2.turn < MAX_TURN) {
+					char temp[LENGTH_MSG];
+					sprintf(temp, "new_character_unblock: %s", q.hide_answer);
+					send_msg_room(connfd, room_id, temp);
+				}
 			}
 
 			if (strstr(buff, "./get_question")) {
-				Question q = load_question();
+				q = load_question();
 				char temp[LENGTH_MSG];
 				char temp2[LENGTH_MSG];
-				sprintf(temp, "./new_question_2: %s#%s#", q.question, q.hide_answer);
-				sprintf(temp2, "./new_question_1: %s#%s#", q.question, q.hide_answer);
-				send(connfd, temp, strlen(temp), 0);
-				send_msg_room(connfd, room_id, temp2);
+				sprintf(temp, "new_question_1: %s#%s#", q.question, q.hide_answer);
+				sprintf(temp2, "new_question_2: %s#%s#", q.question, q.hide_answer);
+
+				send(connfd, temp2, strlen(temp2), 0);
+				send_msg_room(connfd, room_id, temp);
 			}
 
 
