@@ -35,7 +35,6 @@ typedef struct Client {
 typedef struct Room {
     int id;
     int client_num;
-    int turn_now;
 } Room;
 
 
@@ -53,6 +52,7 @@ int room_id;
 char answer_client[30][30];
 Question question;
 int handler_id;
+Client my_client;
 
 // GUI
 GdkPixbuf *image = NULL;
@@ -67,4 +67,4 @@ GtkWidget *label_room = NULL, *button_room[ROOM_NUM];
 GtkWidget *label_wait, *btn_back, *msg_box = NULL, *scroll_window, *entry_msg, *friend_box, *label_client[ROOM_SIZE], *box_client;
 GtkWidget *label_start, *label_question, *button_option[4], *text_view_question, *label_ring, *label_answer;
 GtkWidget *end_game_result, *step, *result_box;
-GtkWidget *label_enter_char, *temp_Answer, *label_test;
+GtkWidget *label_enter_char, *temp_Answer, *label_test, *label_grade[ROOM_SIZE], *entry_answer, *label_enter_answer;

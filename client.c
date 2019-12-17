@@ -23,7 +23,6 @@
 #include "send_request.c"
 
 
-
 void recv_msg() {
 	char *receive_message = malloc(LENGTH_MSG);
 	memset(receive_message, 0, strlen(receive_message)+1);
@@ -47,13 +46,13 @@ gboolean timer_exe(gpointer p, int test) {
 		strcpy(msg, response->key);
 		if (strstr(msg, "new_client_success") || strstr(msg, "choose_room_again")) {
 			data = get_data(msg);
-			choose_room_screen(data);
-			
+			choose_room_screen(data);	
 	    }
 
         if (strstr(msg, "join_room_success")) {	
 			data = get_data(msg);
 			wait_friend_screen(data);
+			
 		}
 
 		if (strstr(msg, "join_room_error")) {
@@ -76,25 +75,40 @@ gboolean timer_exe(gpointer p, int test) {
 			refresh_friend_room(data);
 		}
 
-		if (strstr(msg, "new_character_block")) {
+		if (strstr(msg, "left_room")) {
 			data = get_data(msg);
-
-			g_signal_handler_disconnect(entry_msg, handler_id);
-			redisplay_answer(data);
+			if (strstr(msg, "left_room_running")) {
+				puts("thoat");
+				running_client--;
+			}
+			show_info(data);
+			append_message(data);
 		}
 
+		if (strstr(msg, "new_character_block")) {
+			data = get_data(msg);
+			convert_question_and_grade(data);
+			
+			g_signal_handler_disconnect(entry_msg, handler_id);
+			redisplay_answer_grade();
+
+		}
+
+		/*gửi đến thằng client cùng phòng nếu lượt chơi của nó < max_turn*/
 		if (strstr(msg, "new_character_unblock")) {
 			data = get_data(msg);
-			
+			puts(data);
+			convert_question_and_grade(data);
 			handler_id = g_signal_connect(entry_msg, "activate", G_CALLBACK(send_character), NULL);
-			redisplay_answer(data);
+			redisplay_answer_grade();
+
 		}
 
 		if (strstr(msg, "new_question_1")) {
 			data = get_data(msg);
 			display_question(data);
 			handler_id = g_signal_connect(entry_msg, "activate", G_CALLBACK(send_character), NULL);
-			//g_signal_handler_disconnect(entry_msg, handler_id);
+
 		}
 
 		if (strstr(msg, "new_question_2")) {
@@ -103,6 +117,30 @@ gboolean timer_exe(gpointer p, int test) {
 			
 			g_signal_handler_disconnect(entry_msg, handler_id);
 		}
+
+		if (strstr(msg, "signal_guess")) {
+			
+			data = get_data(msg);
+			convert_question_and_grade(data);
+			
+			g_signal_handler_disconnect(entry_msg, handler_id);
+			
+			redisplay_answer_grade();
+			send_guess();
+		}
+
+		if (strstr(msg, "guess_the_answer")) {		
+			input_answer();
+		}
+
+		if (strstr(msg, "finish")) {
+			data = get_data(msg);
+			convert_question_and_grade(data);
+	
+			g_signal_handler_disconnect(entry_answer, handler_id);
+			redisplay_answer_grade();
+		}
+
 		
 		/*...refresh_answer_room......*/
     }
@@ -125,6 +163,8 @@ int main(int argc, char *argv[]) {
 
 	struct sockaddr_in server_socket;
     client_sock = socket(AF_INET, SOCK_STREAM, 0);
+
+	my_client.connfd = client_sock;
 	
     server_socket.sin_family = AF_INET;
     server_socket.sin_port = htons(SERVER_PORT);

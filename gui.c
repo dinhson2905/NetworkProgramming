@@ -15,12 +15,13 @@ void lose_game_screen();
 void play_game(); /* Hàm này được gọi khi đủ người chơi trong phòng, gọi đến hàm new_question */
 void new_question(); /* Hiển thị câu hỏi trên giao diện */
 void append_message(char *data);
-void redisplay_answer(char *data);
+void redisplay_answer_grade();/*Hiện thị lại đáp án và câu hỏi*/
+void input_answer();/*Hiển thị thanh nhập answer*/
 /* ----- Send request function ----*/
 void send_name(GtkWidget *widget, gpointer *data);
 void send_room(GtkWidget *widget, gpointer *data);
 void send_character();
-void send_answer (GtkWidget *widget, gpointer *data);
+void send_answer();
 void send_back();
 void send_question();
 /* --------------------------------*/
@@ -82,6 +83,8 @@ void in_game_clear(){
 		gtk_widget_hide(msg_box);
 		gtk_widget_hide(label_question);
 		gtk_widget_hide(label_answer);
+		gtk_widget_hide(label_enter_char);
+		
 		msg_box = NULL;
 	}
 	if (label_question != NULL) {
@@ -176,7 +179,7 @@ void wait_friend_screen(char *data) {
 
 	btn_back = gtk_button_new_with_label("Back");
 	gtk_table_attach_defaults(GTK_TABLE(table), btn_back, 4, 5, 6, 7);
-	//g_signal_connect(btn_back, "clicked", G_CALLBACK(hide_label), NULL);
+	g_signal_connect(btn_back, "clicked", G_CALLBACK(send_back), NULL);
 	gtk_widget_show(btn_back);
 
 	msg_box = gtk_text_view_new();
@@ -239,6 +242,7 @@ void play_game() {
 void display_question(char *data) {
 	
 	convert_question(data);	
+	gtk_widget_hide(label_question);
 	gtk_widget_hide(label_answer);
 
 	label_question = gtk_label_new(NULL);
@@ -271,15 +275,47 @@ void append_message(char *msg) {
 	gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW(msg_box), mark);
 }
 
-void redisplay_answer(char *data) {
+void redisplay_answer_grade() {
 	
 	gtk_widget_hide(label_answer);
-
-	memset(question.hide_answer, 0, sizeof(question.hide_answer));
-	strcpy(question.hide_answer, data);
 
 	label_answer = gtk_label_new(NULL);
 	gtk_label_set_text(GTK_LABEL(label_answer), question.hide_answer);
 	gtk_table_attach_defaults(GTK_TABLE(table), label_answer, 0, 5, 1, 2);
 	gtk_widget_show(label_answer);
+	
+
+	for(int i = 0; i < running_client; i++) {
+		printf("%s %d %d\n", client_arr[i].name, client_arr[i].grade, client_arr[i].turn);
+		if (label_grade[i] != NULL) {
+			gtk_widget_hide(label_grade[i]);
+		}
+
+		label_grade[i] = gtk_label_new(NULL);
+		char temp[10];
+		sprintf(temp, "%d", client_arr[i].grade);
+		gtk_label_set_text(GTK_LABEL(label_grade[i]), temp);
+		gtk_table_attach_defaults(GTK_TABLE(table), label_grade[i], 3+i, 4+i, 3, 4);
+		gtk_widget_show(label_grade[i]);
+	}
+	
+}
+
+void input_answer() {
+	
+	if (entry_msg != NULL) {
+		gtk_widget_hide(entry_msg);
+		gtk_widget_hide(label_enter_char);
+	}
+
+	label_enter_answer = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(label_enter_answer), "<span><b>Enter Answer: </b></span>");
+	gtk_table_attach_defaults(GTK_TABLE(table), label_enter_answer, 0, 1, 6, 7);
+	gtk_widget_show(label_enter_answer);
+
+	entry_answer = gtk_entry_new();
+	gtk_table_attach_defaults(GTK_TABLE(table), entry_answer, 1, 3, 6, 7);
+	handler_id = g_signal_connect(entry_answer, "activate", G_CALLBACK(send_answer), NULL);
+
+	gtk_widget_show(entry_answer);
 }

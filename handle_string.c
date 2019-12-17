@@ -55,6 +55,11 @@ void convert_client_detail(char *data) {
 		strcpy(client_arr[k++].name, element);   
 	}
 	running_client = k;
+	for (int i = 0; i < k; i++) {
+		if (strcmp(client_arr[i].name, my_client.name) == 0) {
+			client_arr[i].connfd = my_client.connfd;
+		}
+	}
 }
 
 void convert_question(char *data) {
@@ -101,3 +106,40 @@ char * string_multiline(char *str) {
 	//return temp;
 }
 
+void convert_question_and_grade(char *data) {
+	int i = 0, j = 0;
+	char element[100];
+	int flag = 0;
+	char name[100];
+
+	while(data[i]) {
+		memset(element, 0, strlen(element));
+		j = 0;
+		while(data[i] != '#') element[j++] = data[i++]; 
+		element[j] = '\0'; 
+		i++;
+
+		if (flag == 0) {
+			strcpy(question.hide_answer, element);
+			flag = 1;
+		} else if (flag == 1) {
+			strcpy(name, element);
+			flag = 2;
+		} else {
+			int grade = atoi(element);
+			for (int i = 0; i < running_client; i++) {
+				if (strcmp(client_arr[i].name, name) == 0) {
+					client_arr[i].grade = grade;
+					client_arr[i].turn++;
+				}
+			}
+		}
+	}
+}
+
+int check_valid_username(char *data) {
+	for (int i = 0; i < strlen(data); i++) {
+		if (data[i] == '#') return 0;
+	}
+	return 1;
+}

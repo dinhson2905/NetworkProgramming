@@ -81,7 +81,16 @@ int join_room(int connfd, int room_id) {
 	return 1;	
 }
 
-
+void left_room(int connfd, int room_id) {
+	for(int i = 0; i < client_num; i++)
+		if (client_arr[i].connfd == connfd)	{
+			client_arr[i].room_id = -1;
+		}
+	if (room_arr[room_id-1].client_num > 0)
+		room_arr[room_id-1].client_num--;
+	if (room_arr[room_id-1].client_num == 0)
+		room_arr[room_id-1].status = ROOM_PENDING;
+}
 
 void send_msg_room(int connfd, int room_id, char *msg) {
 	for (int i = 0; i < client_num; i++) {
@@ -223,18 +232,24 @@ void *echo(void *arg){
 				printf("Name: %s ", clnt.name);
 				printf("Turn: %d ", clnt.turn);	
 				printf("Grade: %d\n", clnt.grade);
-				sprintf(msg, "new_character_block: %s", q.hide_answer);
+				sprintf(msg, "new_character_block: %s#%s#%d#", q.hide_answer, clnt.name, clnt.grade);
 				puts(msg);
+				
 				send(connfd, msg, strlen(msg), 0);
 				
 				Client client2 = get_client_same_room(connfd);
 
 				if (client2.turn < MAX_TURN) {
 					char temp[LENGTH_MSG];
-					sprintf(temp, "new_character_unblock: %s", q.hide_answer);
+					sprintf(temp, "new_character_unblock: %s#%s#%d#", q.hide_answer, clnt.name, clnt.grade);
+					send_msg_room(connfd, room_id, temp);
+				} else {
+					char temp[LENGTH_MSG];
+					sprintf(temp, "signal_guess: %s#%s#%d#", q.hide_answer, clnt.name, clnt.grade);
 					send_msg_room(connfd, room_id, temp);
 				}
 			}
+
 
 			if (strstr(buff, "./get_question")) {
 				q = load_question();
@@ -247,7 +262,54 @@ void *echo(void *arg){
 				send_msg_room(connfd, room_id, temp);
 			}
 
+			if (strstr(buff, "./get_guess")) {
+				char temp[LENGTH_MSG];
+				sprintf(temp, "guess_the_answer");
 
+				send(connfd, temp, strlen(temp), 0);
+				send_msg_room(connfd, room_id, temp);
+			}
+
+			if (strstr(buff, "./answer")) {
+				
+				if (strcmp(q.answer, get_params(buff)) == 0) {
+					for (int i = 0; i < client_num; i++) {
+						if (client_arr[i].connfd == connfd) {
+							client_arr[i].grade += 100;
+							break;
+						}
+					}
+				}
+				Client clnt = get_client(connfd);
+				char temp[LENGTH_MSG];
+				sprintf(temp, "finish: %s#%s#%d#", q.answer, clnt.name, clnt.grade);
+				send(connfd, temp, strlen(temp), 0);
+				send_msg_room(connfd, room_id, temp);
+			}
+
+			if (strstr(buff, "./left_room")) {
+				puts(buff);
+				room_id =  atoi(get_params(buff));
+				left_room(connfd, room_id);
+				sprintf(msg, "choose_room_again: ");
+				for (int i = 0; i < ROOM_MAX; i++) {
+					sprintf(msg + strlen(msg), "%d-%d#", room_arr[i].id, room_arr[i].client_num);	
+				}
+				send(connfd, msg, strlen(msg), 0);
+				
+				char temp[LENGTH_MSG];
+				if (strstr(buff, "left_room_eliminated"))
+					sprintf(temp, "left_room_eliminated: %s had left room.", get_client(connfd).name);
+				else sprintf(temp, "left_room_running: %s had left room.", get_client(connfd).name); 
+				send_msg_room(connfd, room_id, temp);
+		
+				char temp2[LENGTH_MSG];	
+				sprintf(temp2, "refresh_list_room: ");
+				for (int i = 0; i < ROOM_MAX; i++) {
+					sprintf(temp2 + strlen(temp2), "%d-%d#", room_arr[i].id, room_arr[i].client_num);	
+				}
+				send_all_client(room_id, connfd, temp2);
+			}
 			if (strstr(buff, "./exit")) {
 				
 			}

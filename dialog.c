@@ -27,3 +27,4 @@ void show_info(char info[]) {
     gtk_widget_destroy(dialog);
     gdk_threads_leave();
 }
+
