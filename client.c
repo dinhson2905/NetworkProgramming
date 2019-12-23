@@ -87,7 +87,7 @@ gboolean timer_exe(gpointer p, int test) {
 
 		if (strstr(msg, "new_character_block")) {
 			data = get_data(msg);
-			convert_question_and_grade(data);
+			convert_character_question_and_grade(data);
 			
 			g_signal_handler_disconnect(entry_msg, handler_id);
 			redisplay_answer_grade();
@@ -98,7 +98,7 @@ gboolean timer_exe(gpointer p, int test) {
 		if (strstr(msg, "new_character_unblock")) {
 			data = get_data(msg);
 			puts(data);
-			convert_question_and_grade(data);
+			convert_character_question_and_grade(data);
 			handler_id = g_signal_connect(entry_msg, "activate", G_CALLBACK(send_character), NULL);
 			redisplay_answer_grade();
 
@@ -121,7 +121,7 @@ gboolean timer_exe(gpointer p, int test) {
 		if (strstr(msg, "signal_guess")) {
 			
 			data = get_data(msg);
-			convert_question_and_grade(data);
+			convert_character_question_and_grade(data);
 			
 			g_signal_handler_disconnect(entry_msg, handler_id);
 			
@@ -133,13 +133,35 @@ gboolean timer_exe(gpointer p, int test) {
 			input_answer();
 		}
 
-		if (strstr(msg, "finish")) {
+		if (strstr(msg, "done_display_result")) {
 			data = get_data(msg);
-			convert_question_and_grade(data);
-	
+			convert_answer_question_and_grade(data);
 			g_signal_handler_disconnect(entry_answer, handler_id);
-			redisplay_answer_grade();
+			display_result();
+			send_result();
 		}
+
+		if (strstr(msg, "done_hide_result")) {
+			data = get_data(msg);
+			convert_answer_question_and_grade(data);
+			g_signal_handler_disconnect(entry_answer, handler_id);
+			display_answer_grade();
+			gtk_widget_hide(label_enter_answer);
+			gtk_widget_hide(entry_answer);
+			
+		}
+
+		if (strstr(msg, "unfinish")) {
+			data = get_data(msg);
+			convert_answer_question_and_grade(data);
+			display_answer_grade();
+		}
+
+		if (strstr(msg, "end_game")) {
+			data = get_data(msg);
+			show_info(data);
+		}
+
 
 		
 		/*...refresh_answer_room......*/
@@ -163,8 +185,6 @@ int main(int argc, char *argv[]) {
 
 	struct sockaddr_in server_socket;
     client_sock = socket(AF_INET, SOCK_STREAM, 0);
-
-	my_client.connfd = client_sock;
 	
     server_socket.sin_family = AF_INET;
     server_socket.sin_port = htons(SERVER_PORT);
@@ -173,18 +193,15 @@ int main(int argc, char *argv[]) {
 
     if (connect(client_sock, (struct sockaddr *)&server_socket, sizeof(server_socket)) < 0)
         printf("Error in connecting to server\n");
-    else
-        printf("connected to server\n");
+    else printf("connected to server\n");
 
     // Signal driven I/O mode and NONBlOCK mode so that recv will not block
-    if (fcntl(client_sock, F_SETFL, O_NONBLOCK | O_ASYNC))
-        printf("Error in setting socket to async, nonblock mode");
+    if (fcntl(client_sock, F_SETFL, O_NONBLOCK | O_ASYNC)) printf("Error in setting socket to async, nonblock mode");
 
     signal(SIGIO, recv_msg); // assign SIGIO to the handler
 	
     // set this process to be the process owner for SIGIO signal
-    if (fcntl(client_sock, F_SETOWN, getpid()) < 0)
-        printf("Error in setting own to socket");
+    if (fcntl(client_sock, F_SETOWN, getpid()) < 0) printf("Error in setting own to socket");
 
     game_init(); 
 	enter_name_screen();

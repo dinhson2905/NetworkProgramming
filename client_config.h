@@ -46,13 +46,15 @@ Client client_arr[ROOM_SIZE];
 int running = FALSE;
 int in_choose_room = FALSE;
 int in_waiting_friend = FALSE;
-int q_cur;
 char client_name[LENGTH_MSG];
 int room_id;
 char answer_client[30][30];
 Question question;
 int handler_id;
-Client my_client;
+char character_entered;
+char client_name_temp[LENGTH_MSG];
+int grade_temp;
+char answer_guess[LENGTH_MSG];
 
 // GUI
 GdkPixbuf *image = NULL;

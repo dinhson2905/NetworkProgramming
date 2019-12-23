@@ -31,8 +31,7 @@ void send_character() {
 		show_info("Ký tự này đã được chọn");
 		return;
 	}
-
-    append_message(send_buffer);
+	
 	sprintf(message, "./new_character %s", send_buffer);
     send(client_sock, message, strlen(message), 0);
 	puts(message);
@@ -70,7 +69,15 @@ void send_back() {
 	if (running == TRUE)
 		sprintf(message, "./left_room_running %d", room_id);
 	else sprintf(message, "./left_room_eliminated %d", room_id);
+	memset(client_arr, 0, sizeof(client_arr));
+
     send(client_sock, message, strlen(message), 0);
+}
+
+void send_result() {
+	char message[LENGTH_MSG];
+	sprintf(message, "./end_game");
+	send(client_sock, message, strlen(message), 0);
 }
 
 /*./answer 1#char*/

@@ -1,4 +1,4 @@
-char * get_data(char command[]) {
+char *get_data(char command[]) {
 	int i = 0, j;
 	while (command[i] != ' ') i++;
 	i++;
@@ -20,6 +20,7 @@ void convert_room_detail(char *data) {
 		while(data[i] != '-') {
 			element[j++] = data[i++]; 
 		}
+		i++;
 		room_arr[k].id = atoi(element);
 		memset(element, 0, strlen(element));
 		j = 0;
@@ -55,14 +56,10 @@ void convert_client_detail(char *data) {
 		strcpy(client_arr[k++].name, element);   
 	}
 	running_client = k;
-	for (int i = 0; i < k; i++) {
-		if (strcmp(client_arr[i].name, my_client.name) == 0) {
-			client_arr[i].connfd = my_client.connfd;
-		}
-	}
 }
 
 void convert_question(char *data) {
+	
 	int i = 0, j = 0;
 	char element[100];
 	int flag = 0;
@@ -106,11 +103,16 @@ char * string_multiline(char *str) {
 	//return temp;
 }
 
-void convert_question_and_grade(char *data) {
+void convert_character_question_and_grade(char *data) {
+	memset(client_name_temp, 0, sizeof(client_name_temp));
+	grade_temp = 0;
 	int i = 0, j = 0;
 	char element[100];
 	int flag = 0;
 	char name[100];
+
+	character_entered = data[i];
+	i++; i++;
 
 	while(data[i]) {
 		memset(element, 0, strlen(element));
@@ -124,11 +126,54 @@ void convert_question_and_grade(char *data) {
 			flag = 1;
 		} else if (flag == 1) {
 			strcpy(name, element);
+			strcpy(client_name_temp, element);
 			flag = 2;
 		} else {
 			int grade = atoi(element);
 			for (int i = 0; i < running_client; i++) {
 				if (strcmp(client_arr[i].name, name) == 0) {
+					grade_temp = grade - client_arr[i].grade;
+					client_arr[i].grade = grade;
+					client_arr[i].turn++;
+				}
+			}
+		}
+	}
+}
+
+void convert_answer_question_and_grade(char *data) {
+
+	memset(client_name_temp, 0, sizeof(client_name_temp));
+	memset(answer_guess, 0, sizeof(answer_guess));
+	grade_temp = 0;
+
+	int i = 0, j = 0;
+	char element[100];
+	int flag = 0;
+	char name[100];
+
+	while(data[i]) {
+		memset(element, 0, strlen(element));
+		j = 0;
+		while(data[i] != '#') element[j++] = data[i++]; 
+		element[j] = '\0'; 
+		i++;
+
+		if (flag == 0) {
+			strcpy(answer_guess, element);
+			flag = 1;
+		} else if (flag == 1) {
+			strcpy(question.hide_answer, element);
+			flag = 2;
+		} else if (flag == 2) {
+			strcpy(name, element);
+			strcpy(client_name_temp, element);
+			flag = 3;
+		} else {
+			int grade = atoi(element);
+			for (int i = 0; i < running_client; i++) {
+				if (strcmp(client_arr[i].name, name) == 0) {
+					grade_temp = grade - client_arr[i].grade;
 					client_arr[i].grade = grade;
 					client_arr[i].turn++;
 				}
