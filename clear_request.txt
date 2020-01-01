@@ -12,13 +12,13 @@
 3. Khi bắt đầu chơi thì thằng server sẽ gửi cho thằng client đầu tiên cái thanh input
     + Khóa thanh input của tất cả những thằng cùng phòng lại
 
-4. Khi thằng client gửi ký tự cho thằng server (./answer a 1)
+4. Khi thằng client gửi ký tự cho thằng server
     + Server check
     + Hiển thị lên màn hình kết quá
     + Khóa thanh input của thằng này lại
     + Mở thanh input của thằng client kia
 
-5. Nếu gửi đến lần thứ 3 xong, server gửi dialog nhập đáp án đoán của 2 thằng
+5. Nếu gửi đến lần thứ 3 xong, server gửi thanh input nhập đáp án đoán của 2 thằng
     + ...............
 
 0. Khi enter_name xong thì thằng choose_room sẽ có thông tin của thằng đó
@@ -29,4 +29,4 @@
     + server kiểm tra ký tự đó có trong xâu không để tính điểm.
     + update điểm.
     + turn++;
-    + nếu turn == 2 thì gửi thông điệp './new_character_block: ', './new_character_unblock: '
+    + ....

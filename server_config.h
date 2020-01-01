@@ -44,3 +44,5 @@ char boolean[2][10] = {"false", "true"};
 Client client_arr[CLIENT_MAX];
 int client_num = 0;
 struct sockaddr_in server, client;
+Client client_name[CLIENT_MAX];
+int count_client = 0;

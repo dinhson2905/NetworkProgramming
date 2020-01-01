@@ -1,4 +1,4 @@
-#include <stdio.h>          /* These are the usual header files */
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -7,19 +7,22 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <stdlib.h>
-
 #include "server_config.h"
 #include "question.c"
 
 /*--------------------------------*/
 void room_init(); /* Khởi tạo 1 phòng */
-void str_trim(); /* Xóa các kí tự kể từ index đến kết thúc */
-Client get_client(); /* lấy 1 client theo connfd */
+void str_trim(char *str, int index); /* Xóa các kí tự kể từ index đến kết thúc */
+Client get_client(int connfd); /* lấy 1 client theo connfd */
+Client get_client_same_room(int connfd); /*lấy thằng client cùng phòng*/
 void new_client(); /* Tạo thêm 1 thằng client để server xử lý */
+int num_char_in_string(char c, char *str);/**/
+void left_room(int connfd, int room_id);/*cập nhật lại thông tin phòng sau khi rời phòng*/
 int join_room(); /* Kiểm tra xem có được phép join room không, phòng đang chơi hoặc full --> 0*/
 char* get_params(); /* Trả về tham số của message. VD: "./newclient son" sẽ trả về "son" */
 void send_msg_room(int connfd, int room_id, char *msg); /* Gửi msg cho các thằng client khác cùng phòng */
 void send_all_client(int room_id, int connfd, char *msg); /* Gửi thông tin cho những thằng không ở cùng phòng */
+char get_char_msg(char *str);/*lấy ký tự khi client gửi ./new_character*/
 /*-----------------------------------------*/
 Question q;
 void room_init() {
@@ -29,6 +32,7 @@ void room_init() {
 		room_arr[i].status = ROOM_PENDING;
 	}
 }
+
 
 void str_trim(char *str, int index) {
 	for (int i=strlen(str)-1; i>=index; i--) {
@@ -138,9 +142,7 @@ void *echo(void *arg){
 	char msg[LENGTH_MSG];
 	int connfd = *((int *) arg);
 		
-	pthread_detach(pthread_self());
-	// Game start
-	
+	pthread_detach(pthread_self());	
 	int room_id;	
 	while (1) {
 		memset(buff, 0, strlen(buff));
@@ -150,15 +152,32 @@ void *echo(void *arg){
 
 			if (strstr(buff, "./new_client")) {
 				new_client(connfd, get_params(buff));
-				printf("You got a connection from %s - Port: %d\n", inet_ntoa(client.sin_addr), ntohs(client.sin_port)); /* prints client's IP */
+				printf("You got a connection from %s - Port: %d\n", inet_ntoa(client.sin_addr), ntohs(client.sin_port));
 				printf("Client name: %s \n", buff);
-				sprintf(msg, "new_client_success: ");
-
-				for (int i = 0; i < ROOM_MAX; i++) {
-					sprintf(msg + strlen(msg), "%d-%d#", room_arr[i].id, room_arr[i].client_num);	
+				
+				int flag = 0;
+				for (int i = 0; i <= count_client; i++) {
+					if (strcmp(client_name[i].name, get_params(buff)) == 0) {
+						flag = 1;
+						break;
+					}
 				}
-				/*gửi thông tin tất cả phòng cho thằng client để nó hiển thị theo định dạng 1-0#2-0#2-0#4-0#*/
-				send(connfd, msg, strlen(msg), 0);	
+
+				if (flag == 1) {
+					sprintf(msg, "new_client_error: Tên không hợp lệ!");
+					send(connfd, msg, strlen(msg), 0);
+				} else {
+					sprintf(msg, "new_client_success: ");
+
+					for (int i = 0; i < ROOM_MAX; i++) {
+						sprintf(msg + strlen(msg), "%d-%d#", room_arr[i].id, room_arr[i].client_num);	
+					}
+					/*gửi thông tin tất cả phòng cho thằng client để nó hiển thị theo định dạng 1-0#2-0#2-0#4-0#*/
+					send(connfd, msg, strlen(msg), 0);
+					strcpy(client_name[count_client++].name, get_params(buff));
+				}
+
+					
 			}
 
 			if (strstr(buff, "./join_room")) {
@@ -247,7 +266,6 @@ void *echo(void *arg){
 				}
 			}
 
-
 			if (strstr(buff, "./get_question")) {
 				q = load_question();
 				char temp[LENGTH_MSG];
@@ -290,8 +308,6 @@ void *echo(void *arg){
 							break;
 						}
 					}
-
-					
 
 					Client client2 = get_client_same_room(connfd);
 
@@ -359,11 +375,6 @@ void *echo(void *arg){
 					sprintf(temp, "./end_game: %s là kẻ chiến thằng.\n%s là kẻ chiến bại.", client2.name, client1.name);
 					send(connfd, temp, strlen(temp), 0);
 				}
-				
-			}
-
-
-			if (strstr(buff, "./exit")) {
 				
 			}
 		}

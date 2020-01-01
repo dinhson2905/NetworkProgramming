@@ -32,10 +32,7 @@ void recv_msg() {
 		receive_message[receive] = '\0';
 		puts(receive_message);
 		enQueue(responses, receive_message);
-	} else if (receive == 0) {
-		// break;
-	} else { 
-		// -1 
+	} else {
 	}
 }
 
@@ -48,6 +45,11 @@ gboolean timer_exe(gpointer p, int test) {
 			data = get_data(msg);
 			choose_room_screen(data);	
 	    }
+
+		if (strstr(msg, "new_client_error")) {
+			data = get_data(msg);
+			show_error(data);
+		}
 
         if (strstr(msg, "join_room_success")) {	
 			data = get_data(msg);
@@ -161,10 +163,6 @@ gboolean timer_exe(gpointer p, int test) {
 			data = get_data(msg);
 			show_info(data);
 		}
-
-
-		
-		/*...refresh_answer_room......*/
     }
 
     return TRUE;
@@ -177,7 +175,7 @@ int main(int argc, char *argv[]) {
     responses = createQueue(); 
 
 	if (!g_thread_supported ()){ g_thread_init(NULL); }
-	// initialize GDK thread support
+	/*initialize GDK thread support*/
 	gdk_threads_init();
 	gdk_threads_enter();
 	g_timeout_add(100, (GSourceFunc)timer_exe, NULL);
@@ -195,12 +193,12 @@ int main(int argc, char *argv[]) {
         printf("Error in connecting to server\n");
     else printf("connected to server\n");
 
-    // Signal driven I/O mode and NONBlOCK mode so that recv will not block
+    /* Signal driven I/O mode and NONBlOCK mode so that recv will not block*/
     if (fcntl(client_sock, F_SETFL, O_NONBLOCK | O_ASYNC)) printf("Error in setting socket to async, nonblock mode");
-
-    signal(SIGIO, recv_msg); // assign SIGIO to the handler
+	/*assign SIGIO to the handler*/
+    signal(SIGIO, recv_msg); 
 	
-    // set this process to be the process owner for SIGIO signal
+    /*set this process to be the process owner for SIGIO signal*/
     if (fcntl(client_sock, F_SETOWN, getpid()) < 0) printf("Error in setting own to socket");
 
     game_init(); 

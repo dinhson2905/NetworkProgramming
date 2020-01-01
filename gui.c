@@ -3,18 +3,14 @@
 void enter_name_clear();
 void choose_room_clear();
 void in_game_clear();
-void end_game_clear();
 /*-------Hàm giao diện--------*/
 void game_init(); /*khởi tạo game*/
 void enter_name_screen(); /* Nhập tên */
 void choose_room_screen(); /* Giao diện chọn phòng */
 void wait_friend_screen(); /* Giao diện lúc người chơi chưa play game */
-void win_game_screen();
-void result_screen();
-void lose_game_screen();
 void play_game(); /* Hàm này được gọi khi đủ người chơi trong phòng, gọi đến hàm new_question */
 void new_question(); /* Hiển thị câu hỏi trên giao diện */
-void append_message(char *data);
+void append_message(char *data);/*chèn string vào scroll window*/
 void redisplay_answer_grade();/*Hiện thị lại đáp án và câu hỏi*/
 void input_answer();/*Hiển thị thanh nhập answer*/
 void display_answer_grade(); /*Hiển thị giao diện sau khi nhập answer*/
@@ -73,7 +69,6 @@ void choose_room_clear() {
 
 void in_game_clear(){
 	if (btn_back != NULL) {
-		// Chat area
 		for(int i = 0; i < ROOM_SIZE; i++) {
 			if (label_client[i] != NULL) {
 				gtk_widget_hide(label_client[i]);
@@ -93,20 +88,8 @@ void in_game_clear(){
 		
 		msg_box = NULL;
 	}
-	if (label_question != NULL) {
-		// Answer question area
-		gtk_widget_hide(label_question);
-		label_question = NULL;
-		for (int i = 0; i < 4; i++) {
-			gtk_widget_hide(button_option[i]);
-			button_option[i] = NULL;
-		}
-	}
 }
-void end_game_clear(){
-	
-}
-
+/*-------------------------------------------------------------*/
 
 void game_init() {   
 
@@ -137,12 +120,9 @@ void enter_name_screen () {
 	gtk_widget_show_all(window);
 }
 
-
-
 void choose_room_screen(char *data) {
 	enter_name_clear();
 	in_game_clear();
-	end_game_clear();
 	set_background("images/choose_room.jpg");
 
 	in_choose_room = TRUE;
@@ -218,10 +198,9 @@ void refresh_friend_room(char *data) {
 	convert_client_detail(data);
 	
 	for(int i = 0; i < running_client; i++) {
-		//puts(client_arr[i].name);
+		
 		if (label_client[i] == NULL) {
 			label_client[i] = gtk_label_new(NULL);
-			// Make client_name to bold if current client
 			char temp[LENGTH_MSG];
 			if (strcmp(client_name, client_arr[i].name) == 0) {
 				sprintf(temp,"%s", client_arr[i].name);
@@ -259,7 +238,6 @@ void display_question(char *data) {
 	gtk_label_set_text(GTK_LABEL(label_answer), question.hide_answer);
 	gtk_table_attach_defaults(GTK_TABLE(table), label_answer, 0, 5, 1, 2);
 	gtk_widget_show(label_answer);
-	
 }
 
 

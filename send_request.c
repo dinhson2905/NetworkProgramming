@@ -1,6 +1,4 @@
-/*Gửi name cho server xử lý, server trả lại client thông tin*/
 void send_name(GtkWidget *widget, gpointer *data) {
-	// Get username
 	const gchar *send_buffer = gtk_entry_get_text(GTK_ENTRY(widget));
 	strcpy(client_name, send_buffer);
 	if (!check_valid_username(send_buffer)) {
@@ -38,13 +36,14 @@ void send_character() {
 	gtk_entry_set_text(GTK_ENTRY(entry_msg), "");	
 }
 
-
+/*Gửi yêu cầu cho server trả về question*/
 void send_question() {
 	char get_question_cmd[LENGTH_MSG];
 	sprintf(get_question_cmd, "./get_question");
 	send(client_sock, get_question_cmd, strlen(get_question_cmd), 0);
 }
 
+/*Gửi tín hiệu đoán đáp án để server gửi lại cho 2 thằng cùng phòng*/
 void send_guess() {
 	char get_guess_cmd[LENGTH_MSG];
 	sprintf(get_guess_cmd, "./get_guess");
@@ -74,10 +73,9 @@ void send_back() {
     send(client_sock, message, strlen(message), 0);
 }
 
+/*Gửi tín hiệu để server gửi về thông tin kết thúc*/
 void send_result() {
 	char message[LENGTH_MSG];
 	sprintf(message, "./end_game");
 	send(client_sock, message, strlen(message), 0);
 }
-
-/*./answer 1#char*/
